@@ -1,1 +1,1 @@
-export const num = 1;
+export class User {}

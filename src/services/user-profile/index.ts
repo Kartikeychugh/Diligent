@@ -1,1 +1,1 @@
-export { num } from "./user-profile.service";
+export { User } from "./user-profile.service";

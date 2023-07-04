@@ -1,2 +1,2 @@
-export { FirebaseAuthService } from "./firebase-auth.service";
 export { FirebaseStoreService } from "./firebase-store.service";
+export type { IFirebaseStoreService } from "./firebase-store.service";

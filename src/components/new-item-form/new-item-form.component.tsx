@@ -1,37 +1,26 @@
-import { serverTimestamp } from "firebase/firestore";
 import { useRef, useCallback } from "react";
-import { FirebaseStoreService } from "../../services";
-import { useAppSelector } from "../../app/hooks";
+import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { Box, Button, Input, Stack, TextField } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers";
-import {
-  TodoItem,
-  todoItemConverter,
-} from "../../models/todo-item/todo-item.model";
+import { FormState, addTaskAsync } from "../../features/form";
 
 export const NewItemForm = () => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const textFieldRef = useRef<HTMLInputElement | null>(null);
-  const fbss = FirebaseStoreService.getInstance();
-  const { userId } = useAppSelector((state) => state.auth);
+  const formState = useAppSelector((state) => state.form.formState);
+  const disptach = useAppDispatch();
 
   const addTask = useCallback(() => {
-    const colRef = fbss
-      .getCollectionRef("users", [userId, "items"])
-      .withConverter(todoItemConverter);
-
-    fbss.addDocument(
-      colRef,
-      new TodoItem(
-        inputRef.current?.value || "",
-        textFieldRef.current?.value || "",
-        serverTimestamp(),
-        false
-      )
+    disptach(
+      addTaskAsync({
+        title: inputRef.current?.value || "",
+        description: textFieldRef.current?.value || "",
+        done: false,
+      })
     );
     if (inputRef.current) inputRef.current.value = "";
     if (textFieldRef.current) textFieldRef.current.value = "";
-  }, [fbss, userId]);
+  }, [disptach]);
 
   return (
     <Stack
@@ -75,6 +64,9 @@ export const NewItemForm = () => {
           slotProps={{ textField: { size: "small" } }}
         />
         <Button
+          variant="outlined"
+          color={formState === FormState.SUCCESS ? "success" : "primary"}
+          disabled={formState === FormState.BUSY}
           sx={{
             opacity: 1,
             width: "fit-content",

@@ -1,8 +1,11 @@
 import {
+  CollectionReference,
   DocumentData,
-  Firestore,
+  DocumentReference,
+  DocumentSnapshot,
   Query,
   QuerySnapshot,
+  Unsubscribe,
   WithFieldValue,
   addDoc,
   collection,
@@ -13,41 +16,58 @@ import {
   query,
   setDoc,
 } from "firebase/firestore";
+import { firebaseStore } from "../../app/firebase";
 
-export class FirebaseStoreService {
+export interface IFirebaseStoreService {
+  getDocumentRef: (
+    path: string,
+    pathSegments: string[]
+  ) => DocumentReference<DocumentData>;
+  getDocumentSnap: (
+    docRef: ReturnType<typeof doc>
+  ) => Promise<DocumentSnapshot<DocumentData>>;
+  getCollectionRef: (
+    path: string,
+    pathSegments: string[]
+  ) => CollectionReference<DocumentData>;
+  getDocuments: <T>(q: Query<T>) => Promise<QuerySnapshot<T>>;
+  setDocument: (
+    docRef: ReturnType<typeof doc>,
+    data: WithFieldValue<DocumentData>
+  ) => Promise<void>;
+  addDocument: (
+    colRef: ReturnType<typeof collection>,
+    data: WithFieldValue<DocumentData>
+  ) => Promise<DocumentReference<DocumentData>>;
+  listen: (
+    q: Query<DocumentData>,
+    callback: (qs: QuerySnapshot<DocumentData>) => void
+  ) => Unsubscribe;
+}
+
+export class FirebaseStoreService implements IFirebaseStoreService {
   static #key = Symbol();
   static #instance: FirebaseStoreService;
-  #firebaseStore: Firestore;
 
-  constructor(firebaseStore: Firestore, key?: Symbol) {
+  static {
+    FirebaseStoreService.#instance = new FirebaseStoreService(
+      FirebaseStoreService.#key
+    );
+  }
+  constructor(key?: Symbol) {
     if (key !== FirebaseStoreService.#key) {
       throw Error(
         "Use getInstance method to get an instance of FirebaseStoreService"
       );
     }
-
-    this.#firebaseStore = firebaseStore;
-  }
-
-  static initialise(firebaseStore: Firestore) {
-    if (!FirebaseStoreService.#instance) {
-      FirebaseStoreService.#instance = new FirebaseStoreService(
-        firebaseStore,
-        FirebaseStoreService.#key
-      );
-    }
   }
 
   static getInstance() {
-    if (!FirebaseStoreService.#instance) {
-      throw Error("Please initialise FirebaseStoreService");
-    }
-
-    return this.#instance;
+    return FirebaseStoreService.#instance;
   }
 
   getDocumentRef = (path: string, pathSegments: string[]) => {
-    return doc(this.#firebaseStore, path, ...pathSegments);
+    return doc(firebaseStore, path, ...pathSegments);
   };
 
   getDocumentSnap = (docRef: ReturnType<typeof doc>) => {
@@ -55,7 +75,7 @@ export class FirebaseStoreService {
   };
 
   getCollectionRef = (path: string, pathSegments: string[]) => {
-    return collection(this.#firebaseStore, path, ...pathSegments);
+    return collection(firebaseStore, path, ...pathSegments);
   };
 
   getDocuments = <T>(q: ReturnType<typeof query<T>>) => {

@@ -5,32 +5,17 @@ import { store } from "./app/store";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import "./index.css";
-import {
-  firebaseAuth,
-  firebaseStore,
-  googleAuthProvider,
-} from "./app/firebase";
-import { FirebaseAuthService } from "./services/firebase/firebase-auth.service";
-import { FirebaseStoreService } from "./services/firebase/firebase-store.service";
 
 const container = document.getElementById("root")!;
 const root = createRoot(container);
 
-const tasks = [
-  () => FirebaseAuthService.initialise(firebaseAuth, googleAuthProvider),
-  () => FirebaseStoreService.initialise(firebaseStore),
-  () => {
-    root.render(
-      <React.StrictMode>
-        <Provider store={store}>
-          <App />
-        </Provider>
-      </React.StrictMode>
-    );
-  },
-];
-
-tasks.forEach((task) => task());
+root.render(
+  <React.StrictMode>
+    <Provider store={store}>
+      <App />
+    </Provider>
+  </React.StrictMode>
+);
 
 // If you want to start measuring performance in your app, pass a function
 // to log results (for example: reportWebVitals(console.log))
@@ -50,3 +35,42 @@ reportWebVitals();
 // await addDoc(colRef, { content: "ejbfkejw" });
 
 // ...
+
+// useEffect(() => {
+//   Services.FirebaseStoreService.then((service) => {
+//     const docRef = service.getDocumentRef("users", [userId]);
+//     service.getDocumentSnap(docRef).then((res) => {
+//       if (!res.exists()) {
+//         service.setDocument(docRef, { name, email });
+//       }
+//     });
+//   });
+// }, [email, name, userId]);
+
+// useEffect(() => {
+//   Services.FirebaseStoreService.then((service) => {
+//     const docRef = service.getDocumentRef("users", [userId]);
+//     service.getDocumentSnap(docRef).then((res) => {
+//       if (!res.exists()) {
+//         service.setDocument(docRef, { name, email });
+//       }
+//     });
+//   });
+
+//   const fn = fbss.listen(
+//     query(fbss.getCollectionRef("users", [userId, "items"])).withConverter(
+//       todoItemConverter
+//     ),
+//     (querySnapshot) => {
+//       if (querySnapshot.metadata.hasPendingWrites) return;
+
+//       querySnapshot.docChanges().forEach((change) => {
+//         console.log(change.doc.data());
+//       });
+//     }
+//   );
+
+//   return () => {
+//     fn();
+//   };
+// }, [fbss, userId]);

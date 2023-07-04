@@ -1,2 +1,1 @@
-export { FirebaseAuthService, FirebaseStoreService } from "./firebase";
-export * from "./user-profile";
+export { Services } from "./service-manager";
