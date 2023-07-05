@@ -1,0 +1,79 @@
+.task-title {
+  border: none;
+  width: 100%;
+  font-size: 20px;
+  font-weight: bold;
+  color: #c75c5c;
+  letter-spacing: 2px;
+}
+
+.task-title-container {
+  position: relative;
+}
+
+.task-title-container::after {
+  content: "";
+  position: absolute;
+  left: 0px;
+  right: 0px;
+  bottom: 0px;
+  height: 2px;
+  background: #e3e3e3;
+}
+
+.task-title:focus {
+  outline: none;
+}
+
+.task-description {
+  border: none;
+  margin-top: 10px;
+  resize: none;
+  font-size: 15px;
+  line-height: 1.5;
+  letter-spacing: 1px;
+}
+
+.task-description:focus {
+  outline: none;
+}
+
+.add-task-button {
+  width: 90px;
+  transition: 10ms all;
+  font-weight: 700;
+}
+
+.task-due-date {
+  border: none;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: rgba(191, 67, 67, 1);
+  background: rgba(191, 67, 67, 0.1);
+  border-radius: 5px;
+}
+.task-due-date::-webkit-calendar-picker-indicator {
+  /* content: 📅; */
+  position: relative;
+  top: 1px;
+  left: -5px;
+  font-size: 15px;
+  color: rgba(191, 67, 67, 1);
+}
+.task-due-date:focus {
+  outline: none;
+}
+
+.form-errors {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: white;
+  font-weight: 700;
+  /* text-align: center; */
+  background-color: crimson;
+  border-radius: 5px;
+  margin-top: 2px;
+  height: 15px;
+}

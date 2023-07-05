@@ -100,6 +100,8 @@ export class FirebaseStoreService implements IFirebaseStoreService {
     q: Query<DocumentData>,
     callback: (qs: QuerySnapshot<DocumentData>) => void
   ) => {
-    return onSnapshot(q, callback);
+    return onSnapshot(q, { includeMetadataChanges: false }, callback, (err) => {
+      console.log(err);
+    });
   };
 }

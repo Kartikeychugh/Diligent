@@ -1,10 +1,22 @@
-import { NewItemForm } from "../new-item-form";
+import { NewItemForm } from "../form";
 import { Box } from "@mui/material";
+import { Tasks } from "../tasks";
+import { NavBar } from "../navbar";
 
 export const Layout = () => {
   return (
-    <Box sx={{ display: "flex", justifyContent: "center" }}>
-      <NewItemForm />
-    </Box>
+    <>
+      <NavBar />
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          flexDirection: "column",
+        }}
+      >
+        <NewItemForm />
+        <Tasks />
+      </Box>
+    </>
   );
 };

@@ -2,12 +2,16 @@ import { configureStore, ThunkAction, Action } from "@reduxjs/toolkit";
 import counterReducer from "../features/counter/counterSlice";
 import createSagaMiddleware from "redux-saga";
 import { all } from "redux-saga/effects";
-import formReducer, { watchAddTaskAsync } from "../features/form";
+import formReducer, {
+  watchAddTaskAsync,
+  formErrorHandler,
+} from "../features/form";
 import authReducer, {
   watchLoginUserAsync,
   watchLoginStatus,
-  watchLoginChannel,
+  watchLogoutUserAsync,
 } from "../features/auth";
+import tasksReducer, { watchTasksSubscription } from "../features/tasks";
 
 // notice how we now only export the rootSaga
 // single entry point to start all Sagas at once
@@ -16,7 +20,9 @@ export function* rootSaga() {
     watchLoginUserAsync(),
     watchAddTaskAsync(),
     watchLoginStatus(),
-    watchLoginChannel(),
+    formErrorHandler(),
+    watchTasksSubscription(),
+    watchLogoutUserAsync(),
   ]);
 }
 
@@ -26,9 +32,10 @@ export const store = configureStore({
     counter: counterReducer,
     auth: authReducer,
     form: formReducer,
+    tasks: tasksReducer,
   },
   middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(sagaMiddleware),
+    getDefaultMiddleware({ serializableCheck: false }).concat(sagaMiddleware),
 });
 
 sagaMiddleware.run(rootSaga);

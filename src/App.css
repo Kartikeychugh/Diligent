@@ -1,3 +1,27 @@
 body {
-  font-family: "Hanken Grotesk", sans-serif;
+  font-family: "Montserrat", sans-serif !important;
+}
+
+.title {
+  font-size: 100px;
+  font-weight: 700;
+  font-family: "Montserrat", sans-serif;
+}
+
+.primary-button {
+  border: none;
+  letter-spacing: 1px;
+  border-radius: 5px;
+  box-sizing: border-box;
+  color: #c75c5c;
+  font-family: "Montserrat", sans-serif;
+  background: rgba(191, 67, 67, 0.1);
+}
+
+.primary-button:active {
+  /* background: #c75c5c;
+  color: white; */
+  /* box-shadow: 0 0 5px rgba(191, 67, 67, 1) inset; */
+  color: white;
+  background: rgba(191, 67, 67, 1);
 }

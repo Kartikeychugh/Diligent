@@ -1,90 +1,126 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
-import { put, take, takeLatest } from "redux-saga/effects";
+import { call, put, take, takeLatest, takeLeading } from "redux-saga/effects";
 import { Services } from "../../services/service-manager";
 import { IFirebaseAuthService } from "../../services/firebase/firebase-auth.service";
-import { channel } from "redux-saga";
+import { EventChannel, eventChannel } from "redux-saga";
+import { User } from "firebase/auth";
 
 export enum LOGIN_STATE {
   LOGGED_OUT,
   LOGGED_IN,
   UNKNOWN,
   ERROR,
+  LOGGING,
 }
 
-const initialState: {
+export interface IAuthState {
   auth_state: LOGIN_STATE;
-  userId: string;
-  email: string | null;
-  name: string;
-} = {
+  user: {
+    userId: string;
+    email: string | null;
+    name: string;
+  };
+}
+
+const initialState: IAuthState = {
   auth_state: LOGIN_STATE.UNKNOWN,
-  userId: "",
-  email: "",
-  name: "",
+  user: { userId: "", email: "", name: "" },
 };
 
 export const authSlice = createSlice({
   name: "authSlice",
   initialState,
   reducers: {
-    setUserId: (state, action: PayloadAction<string>) => {
-      state.userId = action.payload;
+    setUser: (state, action: PayloadAction<IAuthState["user"]>) => {
+      state.user = action.payload;
     },
-    setEmailId: (state, action: PayloadAction<string | null>) => {
-      state.email = action.payload;
-    },
-    setName: (state, action: PayloadAction<string>) => {
-      state.name = action.payload;
-    },
-    setAuthState: (state, action: PayloadAction<LOGIN_STATE>) => {
+    setAuthState: (state, action: PayloadAction<IAuthState["auth_state"]>) => {
       state.auth_state = action.payload;
     },
   },
 });
 
 export function* watchLoginUserAsync() {
-  yield takeLatest("LOGIN_USER_ASYNC", function* () {
+  yield takeLeading("LOGIN_USER_ASYNC", function* () {
     try {
-      const firebaseAuthService: IFirebaseAuthService =
-        yield Services.FirebaseAuthService;
-      yield firebaseAuthService.login();
+      yield put(setAuthState(LOGIN_STATE.LOGGING));
+      const firebaseAuthService: IFirebaseAuthService = yield call(
+        () => Services.FirebaseAuthService
+      );
+
+      yield call(firebaseAuthService.login);
+      yield put(setAuthState(LOGIN_STATE.LOGGED_IN));
     } catch (e) {
       yield put(setAuthState(LOGIN_STATE.ERROR));
     }
   });
 }
 
-const loginStatusChannel = channel();
+export function* watchLogoutUserAsync() {
+  yield takeLeading("LOGOUT_USER_ASYNC", function* () {
+    try {
+      const firebaseAuthService: IFirebaseAuthService = yield call(
+        () => Services.FirebaseAuthService
+      );
 
-export function* watchLoginStatus() {
-  yield takeLatest("LOGIN_USER_STATUS", function* () {
-    const firebaseAuthService: IFirebaseAuthService =
-      yield Services.FirebaseAuthService;
-
-    firebaseAuthService.watchLoginState((user) => {
-      if (user) {
-        console.log(`Logged in: ${user.email}`);
-        loginStatusChannel.put(setAuthState(LOGIN_STATE.LOGGED_IN));
-        loginStatusChannel.put(setUserId(user.uid));
-        loginStatusChannel.put(setEmailId(user.email));
-        loginStatusChannel.put(setName(user.displayName || ""));
-      } else {
-        loginStatusChannel.put(setAuthState(LOGIN_STATE.LOGGED_OUT));
-        loginStatusChannel.put(setUserId(""));
-      }
-    });
+      yield call(firebaseAuthService.logout);
+      yield put(setAuthState(LOGIN_STATE.LOGGED_OUT));
+    } catch (e) {
+      yield put(setAuthState(LOGIN_STATE.ERROR));
+    }
   });
 }
 
-export function* watchLoginChannel() {
-  while (true) {
-    const action: PayloadAction = yield take(loginStatusChannel);
-    yield put(action);
-  }
-}
-export const loginUserAsync = () => ({ type: "LOGIN_USER_ASYNC" });
-export const loginUserStatus = () => ({ type: "LOGIN_USER_STATUS" });
+function subscribeToLoginState() {
+  return eventChannel<{ user: User | null }>((emitter) => {
+    const unsubscribe = (async () => {
+      const firebaseAuthService = await Services.FirebaseAuthService;
+      return firebaseAuthService.watchLoginState((user) => {
+        emitter({ user });
+      });
+    })();
 
-export const { setUserId, setAuthState, setEmailId, setName } =
-  authSlice.actions;
+    return () => {
+      unsubscribe.then((fn) => {
+        fn();
+      });
+    };
+  });
+}
+
+export function* watchLoginStatus() {
+  yield takeLatest("AUTH_INIT", function* () {
+    const channel: EventChannel<{ user: User | null }> = yield call(
+      subscribeToLoginState
+    );
+    try {
+      while (true) {
+        const result: { user: User | null } = yield take(channel);
+        const { user } = result;
+        if (user) {
+          yield put(setAuthState(LOGIN_STATE.LOGGED_IN));
+          yield put(
+            setUser({
+              userId: user.uid,
+              email: user.email,
+              name: user.displayName || "",
+            })
+          );
+        } else {
+          yield put(setAuthState(LOGIN_STATE.LOGGED_OUT));
+          yield put(setUser(initialState.user));
+        }
+      }
+    } finally {
+      channel.close();
+    }
+  });
+}
+
+export const loginUserAsync = () => ({ type: "LOGIN_USER_ASYNC" });
+export const logoutUserAsync = () => ({ type: "LOGOUT_USER_ASYNC" });
+
+export const authInit = () => ({ type: "AUTH_INIT" });
+
+export const { setUser, setAuthState } = authSlice.actions;
 export const reducer = authSlice.reducer;

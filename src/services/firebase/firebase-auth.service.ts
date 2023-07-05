@@ -1,15 +1,17 @@
 import {
   NextOrObserver,
+  Unsubscribe,
   User,
   onAuthStateChanged,
   signInWithPopup,
+  signOut,
 } from "firebase/auth";
-import { retryFunction } from "../../utils/retry";
 import { firebaseAuth, googleAuthProvider } from "../../app/firebase";
 
 export interface IFirebaseAuthService {
   login(): Promise<User>;
-  watchLoginState(listener: NextOrObserver<User>): void;
+  logout(): Promise<void>;
+  watchLoginState(listener: NextOrObserver<User>): Unsubscribe;
 }
 
 export class FirebaseAuthService implements IFirebaseAuthService {
@@ -35,15 +37,22 @@ export class FirebaseAuthService implements IFirebaseAuthService {
   async login(): Promise<User> {
     if (firebaseAuth.currentUser) return firebaseAuth.currentUser;
 
-    const retryableFn = retryFunction(async () => {
-      const res = await signInWithPopup(firebaseAuth, googleAuthProvider);
-      return res.user;
-    }, 3);
+    // const retryableFn = retryFunction(async () => {
+    //   const res = await signInWithPopup(firebaseAuth, googleAuthProvider);
+    //   return res.user;
+    // }, 3);
+    // return retryableFn();
 
-    return retryableFn();
+    return signInWithPopup(firebaseAuth, googleAuthProvider).then(
+      (res) => res.user
+    );
+  }
+
+  async logout(): Promise<void> {
+    return signOut(firebaseAuth);
   }
 
   watchLoginState(listener: NextOrObserver<User>) {
-    onAuthStateChanged(firebaseAuth, listener);
+    return onAuthStateChanged(firebaseAuth, listener);
   }
 }

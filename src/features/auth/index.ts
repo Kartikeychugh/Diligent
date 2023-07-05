@@ -1,11 +1,12 @@
 export {
   reducer as default,
-  setUserId,
+  setUser,
   setAuthState,
-  setEmailId,
-  setName,
   loginUserAsync,
   watchLoginUserAsync,
   watchLoginStatus,
-  watchLoginChannel,
+  authInit,
+  LOGIN_STATE,
+  logoutUserAsync,
+  watchLogoutUserAsync,
 } from "./auth.reducer";

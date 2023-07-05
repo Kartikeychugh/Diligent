@@ -2,7 +2,6 @@ import {
   DocumentData,
   QueryDocumentSnapshot,
   SnapshotOptions,
-  Timestamp,
   serverTimestamp,
 } from "firebase/firestore";
 
@@ -10,22 +9,21 @@ export class TodoItem {
   title: string;
   description: string;
   createdOn: ReturnType<typeof serverTimestamp>;
+  dueDate: number;
   done: boolean;
 
   constructor(
     title: string,
     description: string,
     createdOn: ReturnType<typeof serverTimestamp>,
+    dueDate: string,
     done: boolean
   ) {
     this.title = title;
     this.description = description;
     this.createdOn = createdOn;
     this.done = done;
-  }
-
-  toString() {
-    return (this.createdOn as Timestamp).toDate();
+    this.dueDate = dueDate ? new Date(dueDate).getTime() : 0;
   }
 }
 
@@ -36,6 +34,7 @@ export const todoItemConverter = {
       description: todoItem.description,
       createdOn: todoItem.createdOn,
       done: todoItem.done,
+      dueDate: todoItem.dueDate,
     };
   },
   fromFirestore: (
@@ -47,6 +46,7 @@ export const todoItemConverter = {
       data.title,
       data.description,
       data.createdOn,
+      data.dueDate,
       data.done
     );
   },

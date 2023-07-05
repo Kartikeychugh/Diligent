@@ -1,5 +1,12 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
-import { delay, put, select, takeLatest } from "redux-saga/effects";
+import {
+  call,
+  delay,
+  put,
+  select,
+  takeEvery,
+  takeLatest,
+} from "redux-saga/effects";
 import { Services } from "../../services";
 import {
   TodoItem,
@@ -15,8 +22,14 @@ export enum FormState {
   SUCCESS,
 }
 
-const initialState: { formState: FormState } = {
+export interface IFormState {
+  formState: FormState;
+  error: string;
+}
+
+const initialState: IFormState = {
   formState: FormState.AVAILABLE,
+  error: "",
 };
 
 const formSlice = createSlice({
@@ -32,50 +45,67 @@ const formSlice = createSlice({
     formAvailable: (state) => {
       state.formState = FormState.AVAILABLE;
     },
+    formError: (state, action: PayloadAction<IFormState["error"]>) => {
+      state.error = action.payload;
+    },
   },
 });
 
 export function* watchAddTaskAsync() {
-  yield takeLatest(
+  yield takeEvery(
     "ADD_TASK_ASYNC",
     function* (
       action: PayloadAction<{
         title: string;
         description: string;
         done: boolean;
+        dueDate: string;
       }>
     ) {
-      yield put(formSubmitted());
-      const state: RootState = yield select();
-      const { title, description, done } = action.payload;
-      const service: IFirebaseStoreService =
-        yield Services.FirebaseStoreService;
+      try {
+        yield put(formSubmitted());
+        const state: RootState = yield select();
+        const { title, description, done, dueDate } = action.payload;
 
-      const colRef = service
-        .getCollectionRef("users", [state.auth.userId, "items"])
-        .withConverter(todoItemConverter);
+        const service: IFirebaseStoreService = yield call(
+          () => Services.FirebaseStoreService
+        );
 
-      yield service.addDocument(
-        colRef,
-        new TodoItem(title, description, serverTimestamp(), done)
-      );
+        const colRef = service
+          .getCollectionRef("users", [state.auth.user.userId, "items"])
+          .withConverter(todoItemConverter);
 
-      yield put(formComplete());
-      yield delay(3000);
-      yield put(formAvailable());
+        yield call(
+          service.addDocument,
+          colRef,
+          new TodoItem(title, description, serverTimestamp(), dueDate, done)
+        );
+
+        yield put(formComplete());
+        yield delay(3000);
+        yield put(formAvailable());
+      } catch (e) {
+        console.log(e);
+      }
     }
   );
+}
+
+export function* formErrorHandler() {
+  // const action: PayloadAction<{ error: string }> = yield take("FORM_ERROR_ON_SUBMISSION");
 }
 
 export const addTaskAsync = (payload: {
   title: string;
   description: string;
   done: boolean;
+  dueDate: string;
 }) => ({
   type: "ADD_TASK_ASYNC",
   payload,
 });
 
-const { formAvailable, formComplete, formSubmitted } = formSlice.actions;
+export const { formAvailable, formComplete, formSubmitted, formError } =
+  formSlice.actions;
 
 export const reducer = formSlice.reducer;

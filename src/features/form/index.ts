@@ -3,4 +3,6 @@ export {
   FormState,
   addTaskAsync,
   watchAddTaskAsync,
+  formErrorHandler,
+  formError,
 } from "./form.reducer";
