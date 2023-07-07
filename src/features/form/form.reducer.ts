@@ -1,19 +1,12 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
-import {
-  call,
-  delay,
-  put,
-  select,
-  takeEvery,
-  takeLatest,
-} from "redux-saga/effects";
+import { call, put, select, takeEvery } from "redux-saga/effects";
 import { Services } from "../../services";
 import {
   TodoItem,
   todoItemConverter,
 } from "../../models/todo-item/todo-item.model";
 import { RootState } from "../../app/store";
-import { serverTimestamp } from "firebase/firestore";
+import { Timestamp, serverTimestamp } from "firebase/firestore";
 import { IFirebaseStoreService } from "../../services/firebase/firebase-store.service";
 
 export enum FormState {
@@ -72,18 +65,20 @@ export function* watchAddTaskAsync() {
         );
 
         const colRef = service
-          .getCollectionRef("users", [state.auth.user.userId, "items"])
+          .getCollectionRef("users", [state.auth.user.id, "items"])
           .withConverter(todoItemConverter);
 
-        yield call(
-          service.addDocument,
-          colRef,
-          new TodoItem(title, description, serverTimestamp(), dueDate, done)
+        const item = new TodoItem(
+          "",
+          title,
+          description,
+          serverTimestamp() as Timestamp,
+          dueDate,
+          done
         );
 
-        yield put(formComplete());
-        yield delay(3000);
-        yield put(formAvailable());
+        yield call(service.addDocument, colRef, item);
+        yield put({ type: "REFRESH_TASKS" });
       } catch (e) {
         console.log(e);
       }

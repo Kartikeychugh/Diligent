@@ -2,6 +2,7 @@ import { useRef, useCallback, FormEvent, useState } from "react";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { addTaskAsync, formError } from "../../features/form";
 import "./form.css";
+import { Paper } from "@mui/material";
 
 export const NewItemForm = () => {
   const inputRef = useRef<HTMLInputElement | null>(null);
@@ -50,8 +51,17 @@ export const NewItemForm = () => {
   );
 
   return (
-    <form onSubmit={addTask}>
-      <div style={{ display: "flex", flexDirection: "column", width: "600px" }}>
+    <Paper
+      elevation={2}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        width: "600px",
+        height: "201px",
+        zIndex: 1,
+      }}
+    >
+      <form onSubmit={addTask}>
         <div
           style={{
             display: "flex",
@@ -98,7 +108,7 @@ export const NewItemForm = () => {
           </div>
         </div>
         {showError && error && <div className="form-errors">{error}</div>}
-      </div>
-    </form>
+      </form>
+    </Paper>
   );
 };

@@ -10,12 +10,16 @@ export const Layout = () => {
       <Box
         sx={{
           display: "flex",
+          width: "100%",
+          height: "calc(100% - 50px)",
           alignItems: "center",
           flexDirection: "column",
         }}
       >
         <NewItemForm />
-        <Tasks />
+        <Box sx={{ height: "calc(100% - 201px)" }}>
+          <Tasks />
+        </Box>
       </Box>
     </>
   );

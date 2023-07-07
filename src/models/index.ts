@@ -1,1 +1,2 @@
-export * from "./todo-item";
+export { TodoItem, todoItemConverter } from "./todo-item";
+export { userProfileConverter, UserProfile } from "./user-profile";

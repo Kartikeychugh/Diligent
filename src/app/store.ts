@@ -11,7 +11,8 @@ import authReducer, {
   watchLoginStatus,
   watchLogoutUserAsync,
 } from "../features/auth";
-import tasksReducer, { watchTasksSubscription } from "../features/tasks";
+import tasksReducer, { watchFetchTasks } from "../features/tasks";
+import { watchRefreshTasks } from "../features/tasks/tasks.reducer";
 
 // notice how we now only export the rootSaga
 // single entry point to start all Sagas at once
@@ -21,8 +22,9 @@ export function* rootSaga() {
     watchAddTaskAsync(),
     watchLoginStatus(),
     formErrorHandler(),
-    watchTasksSubscription(),
     watchLogoutUserAsync(),
+    watchFetchTasks(),
+    watchRefreshTasks(),
   ]);
 }
 

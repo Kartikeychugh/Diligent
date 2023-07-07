@@ -51,13 +51,15 @@
   color: rgba(191, 67, 67, 1);
   background: rgba(191, 67, 67, 0.1);
   border-radius: 5px;
+  padding-left: 10px;
 }
 .task-due-date::-webkit-calendar-picker-indicator {
   /* content: 📅; */
   position: relative;
-  top: 1px;
-  left: -5px;
-  font-size: 15px;
+  top: 2px;
+  /* left: -5px; */
+  right: 7px;
+  /* font-size: 15px; */
   color: rgba(191, 67, 67, 1);
 }
 .task-due-date:focus {

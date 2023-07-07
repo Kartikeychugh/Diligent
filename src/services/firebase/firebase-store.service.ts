@@ -16,16 +16,17 @@ import {
   query,
   setDoc,
 } from "firebase/firestore";
-import { firebaseStore } from "../../app/firebase";
+import { IFirebaseAuthService } from "./firebase-auth.service";
+import { Services } from "../service-manager";
 
-export interface IFirebaseStoreService {
+export interface IFirebaseStoreService extends IFirebaseAuthService {
   getDocumentRef: (
     path: string,
     pathSegments: string[]
   ) => DocumentReference<DocumentData>;
-  getDocumentSnap: (
-    docRef: ReturnType<typeof doc>
-  ) => Promise<DocumentSnapshot<DocumentData>>;
+  getDocumentSnap: <T>(
+    docRef: DocumentReference<T>
+  ) => Promise<DocumentSnapshot<T>>;
   getCollectionRef: (
     path: string,
     pathSegments: string[]
@@ -45,63 +46,51 @@ export interface IFirebaseStoreService {
   ) => Unsubscribe;
 }
 
-export class FirebaseStoreService implements IFirebaseStoreService {
-  static #key = Symbol();
-  static #instance: FirebaseStoreService;
+const FirebaseStoreServiceFactory = async () => {
+  const firebaseAuthService = await Services.FirebaseAuthService;
 
-  static {
-    FirebaseStoreService.#instance = new FirebaseStoreService(
-      FirebaseStoreService.#key
-    );
-  }
-  constructor(key?: Symbol) {
-    if (key !== FirebaseStoreService.#key) {
-      throw Error(
-        "Use getInstance method to get an instance of FirebaseStoreService"
-      );
-    }
-  }
+  const service: IFirebaseStoreService = Object.create(firebaseAuthService);
 
-  static getInstance() {
-    return FirebaseStoreService.#instance;
-  }
-
-  getDocumentRef = (path: string, pathSegments: string[]) => {
-    return doc(firebaseStore, path, ...pathSegments);
+  service.getDocumentRef = function (path: string, pathSegments: string[]) {
+    return doc(this.firebaseStore, path, ...pathSegments);
   };
 
-  getDocumentSnap = (docRef: ReturnType<typeof doc>) => {
-    return getDoc(docRef);
+  service.getDocumentSnap = function <T>(docRef: DocumentReference<T>) {
+    return getDoc<T>(docRef);
   };
 
-  getCollectionRef = (path: string, pathSegments: string[]) => {
-    return collection(firebaseStore, path, ...pathSegments);
+  service.getCollectionRef = function (path: string, pathSegments: string[]) {
+    return collection(this.firebaseStore, path, ...pathSegments);
   };
 
-  getDocuments = <T>(q: ReturnType<typeof query<T>>) => {
+  service.getDocuments = function <T>(q: ReturnType<typeof query<T>>) {
     return getDocs(q);
   };
 
-  setDocument = (
+  service.setDocument = function (
     docRef: ReturnType<typeof doc>,
     data: WithFieldValue<DocumentData>
-  ) => {
+  ) {
     return setDoc(docRef, data);
   };
 
-  addDocument = (
+  service.addDocument = function (
     colRef: ReturnType<typeof collection>,
     data: WithFieldValue<DocumentData>
-  ) => {
+  ) {
     return addDoc(colRef, data);
   };
 
-  listen = (
-    q: Query<DocumentData>,
-    callback: (qs: QuerySnapshot<DocumentData>) => void
-  ) => {
+  service.listen = function <T>(
+    q: Query<T>,
+    callback: (qs: QuerySnapshot<T>) => void
+  ) {
     return onSnapshot(q, { includeMetadataChanges: false }, callback, (err) => {
       console.log(err);
     });
   };
-}
+
+  return Object.freeze(service);
+};
+
+export const firebaseStoreService = FirebaseStoreServiceFactory();

@@ -1,18 +1,22 @@
 import { PayloadAction, createSlice } from "@reduxjs/toolkit";
 import { TodoItem } from "../../models";
-import { call, put, select, take, takeEvery } from "redux-saga/effects";
-import { Services } from "../../services";
-import { query } from "firebase/firestore";
+import { put, select, takeLeading } from "redux-saga/effects";
+import { ITaskStoreService, Services } from "../../services";
+import { DocumentSnapshot, QuerySnapshot } from "firebase/firestore";
 import { RootState } from "../../app/store";
 import { todoItemConverter } from "../../models/todo-item/todo-item.model";
-import { EventChannel, eventChannel } from "redux-saga";
+import { QueryBuilder } from "../../utils";
 
 export interface ITasksState {
-  items: { [key: string]: TodoItem };
+  items: TodoItem[];
+  limit: number;
+  lastVisible: DocumentSnapshot<TodoItem> | null;
 }
 
 const initialState: ITasksState = {
-  items: {},
+  items: [],
+  limit: 5,
+  lastVisible: null,
 };
 
 export const tasksSlice = createSlice({
@@ -20,56 +24,80 @@ export const tasksSlice = createSlice({
   initialState: initialState,
   reducers: {
     fetchTaskSuccess: (state, action: PayloadAction<ITasksState["items"]>) => {
-      Object.assign(state.items, action.payload);
+      state.items.push(...action.payload);
+    },
+    refreshTasks: (state, action: PayloadAction<ITasksState["items"]>) => {
+      state.items = action.payload;
+    },
+    setLastVisible: (
+      state,
+      action: PayloadAction<ITasksState["lastVisible"]>
+    ) => {
+      state.lastVisible = action.payload;
     },
   },
 });
 
-function subscribeToTasks(userId: string) {
-  return eventChannel<ITasksState["items"]>((emitter) => {
-    const unsubscribe = (async () => {
-      const firebaseStoreService = await Services.FirebaseStoreService;
-      return firebaseStoreService.listen(
-        query(
-          firebaseStoreService.getCollectionRef("users", [userId, "items"])
-        ).withConverter(todoItemConverter),
-        (querySnapshot) => {
-          if (querySnapshot.metadata.hasPendingWrites) return;
-          const items: ITasksState["items"] = {};
-          querySnapshot.docs.forEach((doc) => {
-            if (!doc.metadata.hasPendingWrites) {
-              Object.assign(items, { [doc.id]: doc.data() });
-            }
-          });
-          emitter(items);
-        }
-      );
-    })();
+export function* watchRefreshTasks() {
+  yield takeLeading("REFRESH_TASKS", function* () {
+    const taskStoreService: ITaskStoreService = yield Services.TaskStoreService;
+    const state: RootState = yield select();
 
-    return () => {
-      unsubscribe.then((fn) => fn());
-    };
+    const Q = QueryBuilder()
+      .colRef(taskStoreService.getItemsCollectionRef(state.auth.user.id))
+      .orderBy("dueDate", "desc")
+      .endAt(state.tasks.lastVisible)
+      .generate()
+      .withConverter(todoItemConverter);
+
+    const docs: QuerySnapshot<TodoItem> = yield taskStoreService.getDocuments(
+      Q
+    );
+
+    const items: TodoItem[] = [];
+    docs.forEach((doc) => {
+      items.push(doc.data());
+    });
+
+    yield put(refreshTasks(items));
   });
 }
 
-export function* watchTasksSubscription() {
-  yield take("SUBSCRIBE_TO_TASKS");
-  const state: RootState = yield select();
-  const channel: EventChannel<ITasksState["items"]> = yield call(
-    subscribeToTasks,
-    state.auth.user.userId
-  );
+export function* watchFetchTasks() {
+  yield takeLeading("FETCH_NEXT_TASKS", function* () {
+    const taskStoreService: ITaskStoreService = yield Services.TaskStoreService;
+    const state: RootState = yield select();
 
-  try {
-    while (true) {
-      yield takeEvery(channel, function* (items: ITasksState["items"]) {
-        yield put(fetchTaskSuccess(items));
-      });
+    const Q = QueryBuilder()
+      .colRef(taskStoreService.getItemsCollectionRef(state.auth.user.id))
+      .orderBy("dueDate", "desc")
+      .startAfter(state.tasks.lastVisible)
+      .limit(state.tasks.limit)
+      .generate()
+      .withConverter(todoItemConverter);
+
+    const docs: QuerySnapshot<TodoItem> = yield taskStoreService.getDocuments(
+      Q
+    );
+
+    if (docs.docs.length === 0) return;
+
+    if (
+      state.tasks.lastVisible &&
+      docs.docs[docs.docs.length - 1].id === state.tasks.lastVisible.id
+    ) {
+      return;
     }
-  } finally {
-    channel.close();
-  }
+
+    const items: TodoItem[] = [];
+    docs.forEach((doc) => {
+      items.push(doc.data());
+    });
+    yield put(fetchTaskSuccess(items));
+    yield put(setLastVisible(docs.docs[docs.docs.length - 1]));
+  });
 }
 
-export const { fetchTaskSuccess } = tasksSlice.actions;
 export const reducer = tasksSlice.reducer;
+export const { fetchTaskSuccess, setLastVisible, refreshTasks } =
+  tasksSlice.actions;

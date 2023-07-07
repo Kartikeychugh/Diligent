@@ -4,6 +4,8 @@ import { Services } from "../../services/service-manager";
 import { IFirebaseAuthService } from "../../services/firebase/firebase-auth.service";
 import { EventChannel, eventChannel } from "redux-saga";
 import { User } from "firebase/auth";
+import { IUserProfileService } from "../../services/user-profile/user-profile.service";
+import { UserProfile } from "../../models";
 
 export enum LOGIN_STATE {
   LOGGED_OUT,
@@ -15,16 +17,12 @@ export enum LOGIN_STATE {
 
 export interface IAuthState {
   auth_state: LOGIN_STATE;
-  user: {
-    userId: string;
-    email: string | null;
-    name: string;
-  };
+  user: UserProfile;
 }
 
 const initialState: IAuthState = {
   auth_state: LOGIN_STATE.UNKNOWN,
-  user: { userId: "", email: "", name: "" },
+  user: new UserProfile("", "", ""),
 };
 
 export const authSlice = createSlice({
@@ -49,7 +47,7 @@ export function* watchLoginUserAsync() {
       );
 
       yield call(firebaseAuthService.login);
-      yield put(setAuthState(LOGIN_STATE.LOGGED_IN));
+      // yield put(setAuthState(LOGIN_STATE.LOGGED_IN));
     } catch (e) {
       yield put(setAuthState(LOGIN_STATE.ERROR));
     }
@@ -64,7 +62,7 @@ export function* watchLogoutUserAsync() {
       );
 
       yield call(firebaseAuthService.logout);
-      yield put(setAuthState(LOGIN_STATE.LOGGED_OUT));
+      // yield put(setAuthState(LOGIN_STATE.LOGGED_OUT));
     } catch (e) {
       yield put(setAuthState(LOGIN_STATE.ERROR));
     }
@@ -93,19 +91,24 @@ export function* watchLoginStatus() {
     const channel: EventChannel<{ user: User | null }> = yield call(
       subscribeToLoginState
     );
+
     try {
       while (true) {
         const result: { user: User | null } = yield take(channel);
         const { user } = result;
         if (user) {
-          yield put(setAuthState(LOGIN_STATE.LOGGED_IN));
-          yield put(
-            setUser({
-              userId: user.uid,
-              email: user.email,
-              name: user.displayName || "",
-            })
+          const userProfileService: IUserProfileService =
+            yield Services.UserProfileService;
+
+          const userProfile = new UserProfile(
+            user.uid,
+            user.displayName || "",
+            user.email || ""
           );
+          yield userProfileService.createUserProfile(userProfile);
+          yield put(setUser(userProfile));
+
+          yield put(setAuthState(LOGIN_STATE.LOGGED_IN));
         } else {
           yield put(setAuthState(LOGIN_STATE.LOGGED_OUT));
           yield put(setUser(initialState.user));

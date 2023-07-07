@@ -16,12 +16,14 @@ body {
   color: #c75c5c;
   font-family: "Montserrat", sans-serif;
   background: rgba(191, 67, 67, 0.1);
+  cursor: pointer;
+}
+
+.primary-button:hover {
+  background: rgba(191, 67, 67, 0.2);
 }
 
 .primary-button:active {
-  /* background: #c75c5c;
-  color: white; */
-  /* box-shadow: 0 0 5px rgba(191, 67, 67, 1) inset; */
   color: white;
   background: rgba(191, 67, 67, 1);
 }

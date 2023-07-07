@@ -2,23 +2,26 @@ import {
   DocumentData,
   QueryDocumentSnapshot,
   SnapshotOptions,
-  serverTimestamp,
+  Timestamp,
 } from "firebase/firestore";
 
 export class TodoItem {
+  id: string;
   title: string;
   description: string;
-  createdOn: ReturnType<typeof serverTimestamp>;
+  createdOn: Timestamp;
   dueDate: number;
   done: boolean;
 
   constructor(
+    id: string,
     title: string,
     description: string,
-    createdOn: ReturnType<typeof serverTimestamp>,
+    createdOn: Timestamp,
     dueDate: string,
     done: boolean
   ) {
+    this.id = id;
     this.title = title;
     this.description = description;
     this.createdOn = createdOn;
@@ -43,6 +46,7 @@ export const todoItemConverter = {
   ): TodoItem => {
     const data = snapshot.data(options);
     return new TodoItem(
+      snapshot.id,
       data.title,
       data.description,
       data.createdOn,

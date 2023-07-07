@@ -1,1 +1,1 @@
-export { TodoItem } from "./todo-item.model";
+export { TodoItem, todoItemConverter } from "./todo-item.model";
