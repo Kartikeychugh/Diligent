@@ -12,6 +12,7 @@ export class TodoItem {
   createdOn: Timestamp;
   dueDate: number;
   done: boolean;
+  color: string;
 
   constructor(
     id: string,
@@ -19,7 +20,8 @@ export class TodoItem {
     description: string,
     createdOn: Timestamp,
     dueDate: string,
-    done: boolean
+    done: boolean,
+    color = "white"
   ) {
     this.id = id;
     this.title = title;
@@ -27,6 +29,7 @@ export class TodoItem {
     this.createdOn = createdOn;
     this.done = done;
     this.dueDate = dueDate ? new Date(dueDate).getTime() : 0;
+    this.color = color;
   }
 }
 
@@ -38,6 +41,7 @@ export const todoItemConverter = {
       createdOn: todoItem.createdOn,
       done: todoItem.done,
       dueDate: todoItem.dueDate,
+      color: todoItem.color,
     };
   },
   fromFirestore: (
@@ -51,7 +55,8 @@ export const todoItemConverter = {
       data.description,
       data.createdOn,
       data.dueDate,
-      data.done
+      data.done,
+      data.color
     );
   },
 };

@@ -9,10 +9,14 @@ export class UserProfile {
   name: string;
   email: string;
 
-  constructor(id: string, name: string, email: string) {
+  constructor(
+    id: string,
+    name: string | null | undefined,
+    email: string | null | undefined
+  ) {
     this.id = id;
-    this.name = name;
-    this.email = email;
+    this.name = name || "";
+    this.email = email || "";
   }
 }
 

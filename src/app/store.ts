@@ -2,29 +2,36 @@ import { configureStore, ThunkAction, Action } from "@reduxjs/toolkit";
 import counterReducer from "../features/counter/counterSlice";
 import createSagaMiddleware from "redux-saga";
 import { all } from "redux-saga/effects";
-import formReducer, {
-  watchAddTaskAsync,
-  formErrorHandler,
-} from "../features/form";
+import formReducer from "../features/form";
 import authReducer, {
   watchLoginUserAsync,
-  watchLoginStatus,
+  watchUserAuthStatus,
   watchLogoutUserAsync,
 } from "../features/auth";
-import tasksReducer, { watchFetchTasks } from "../features/tasks";
-import { watchRefreshTasks } from "../features/tasks/tasks.reducer";
+import tasksReducer, {
+  watchFetchTasks,
+  watchTaskAdd,
+  watchUpdateTask,
+} from "../features/tasks";
+import {
+  watchRefreshTasks,
+  watchTaskRenders,
+  deleteTask,
+} from "../features/tasks";
 
 // notice how we now only export the rootSaga
 // single entry point to start all Sagas at once
 export function* rootSaga() {
   yield all([
+    watchUserAuthStatus(),
     watchLoginUserAsync(),
-    watchAddTaskAsync(),
-    watchLoginStatus(),
-    formErrorHandler(),
     watchLogoutUserAsync(),
+    watchTaskAdd(),
     watchFetchTasks(),
     watchRefreshTasks(),
+    watchTaskRenders(),
+    deleteTask(),
+    watchUpdateTask(),
   ]);
 }
 

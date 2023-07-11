@@ -39,7 +39,7 @@ export const authSlice = createSlice({
 });
 
 export function* watchLoginUserAsync() {
-  yield takeLeading("LOGIN_USER_ASYNC", function* () {
+  yield takeLeading("LOGIN_BUTTON_CLICK", function* () {
     try {
       yield put(setAuthState(LOGIN_STATE.LOGGING));
       const firebaseAuthService: IFirebaseAuthService = yield call(
@@ -47,7 +47,6 @@ export function* watchLoginUserAsync() {
       );
 
       yield call(firebaseAuthService.login);
-      // yield put(setAuthState(LOGIN_STATE.LOGGED_IN));
     } catch (e) {
       yield put(setAuthState(LOGIN_STATE.ERROR));
     }
@@ -55,21 +54,20 @@ export function* watchLoginUserAsync() {
 }
 
 export function* watchLogoutUserAsync() {
-  yield takeLeading("LOGOUT_USER_ASYNC", function* () {
+  yield takeLeading("LOGOUT_BUTTON_CLICK", function* () {
     try {
       const firebaseAuthService: IFirebaseAuthService = yield call(
         () => Services.FirebaseAuthService
       );
 
       yield call(firebaseAuthService.logout);
-      // yield put(setAuthState(LOGIN_STATE.LOGGED_OUT));
     } catch (e) {
       yield put(setAuthState(LOGIN_STATE.ERROR));
     }
   });
 }
 
-function subscribeToLoginState() {
+function createUserAuthStatusChannel() {
   return eventChannel<{ user: User | null }>((emitter) => {
     const unsubscribe = (async () => {
       const firebaseAuthService = await Services.FirebaseAuthService;
@@ -86,10 +84,10 @@ function subscribeToLoginState() {
   });
 }
 
-export function* watchLoginStatus() {
-  yield takeLatest("AUTH_INIT", function* () {
+export function* watchUserAuthStatus() {
+  yield takeLatest("APP_LOADED", function* () {
     const channel: EventChannel<{ user: User | null }> = yield call(
-      subscribeToLoginState
+      createUserAuthStatusChannel
     );
 
     try {
@@ -102,12 +100,11 @@ export function* watchLoginStatus() {
 
           const userProfile = new UserProfile(
             user.uid,
-            user.displayName || "",
-            user.email || ""
+            user.displayName,
+            user.email
           );
           yield userProfileService.createUserProfile(userProfile);
           yield put(setUser(userProfile));
-
           yield put(setAuthState(LOGIN_STATE.LOGGED_IN));
         } else {
           yield put(setAuthState(LOGIN_STATE.LOGGED_OUT));
@@ -120,10 +117,9 @@ export function* watchLoginStatus() {
   });
 }
 
-export const loginUserAsync = () => ({ type: "LOGIN_USER_ASYNC" });
-export const logoutUserAsync = () => ({ type: "LOGOUT_USER_ASYNC" });
+export const loginButtonClick = () => ({ type: "LOGIN_BUTTON_CLICK" });
+export const logoutButtonClick = () => ({ type: "LOGOUT_BUTTON_CLICK" });
+export const appLoaded = () => ({ type: "APP_LOADED" });
 
-export const authInit = () => ({ type: "AUTH_INIT" });
-
-export const { setUser, setAuthState } = authSlice.actions;
 export const reducer = authSlice.reducer;
+export const { setUser, setAuthState } = authSlice.actions;

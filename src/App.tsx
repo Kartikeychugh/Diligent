@@ -3,7 +3,7 @@ import { useAppDispatch, useAppSelector } from "./app/hooks";
 import { useEffect } from "react";
 
 import { Layout } from "./components";
-import { LOGIN_STATE, authInit } from "./features/auth";
+import { LOGIN_STATE, appLoaded } from "./features/auth";
 import { LoginScreen } from "./components/login-screen/login-screen.component";
 import "./App.css";
 
@@ -12,11 +12,17 @@ function App() {
   const disptach = useAppDispatch();
 
   useEffect(() => {
-    disptach(authInit());
+    disptach(appLoaded());
   }, [disptach]);
 
   return (
-    <Box style={{ boxSizing: "border-box", height: "100vh" }}>
+    <Box
+      style={{
+        boxSizing: "border-box",
+        height: "100vh",
+        width: "100%",
+      }}
+    >
       {auth_state === LOGIN_STATE.UNKNOWN ? null : auth_state ===
         LOGIN_STATE.LOGGED_IN ? (
         <Layout />

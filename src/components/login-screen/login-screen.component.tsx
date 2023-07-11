@@ -1,14 +1,14 @@
 import { Box, LinearProgress } from "@mui/material";
 import { useCallback } from "react";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import { LOGIN_STATE, loginUserAsync } from "../../features/auth";
+import { LOGIN_STATE, loginButtonClick } from "../../features/auth";
 import "./login-screen.css";
 
 export const LoginScreen = () => {
   const disptach = useAppDispatch();
   const { auth_state } = useAppSelector((state) => state.auth);
-  const login = useCallback(() => {
-    disptach(loginUserAsync());
+  const handleLoginButtonClick = useCallback(() => {
+    disptach(loginButtonClick());
   }, [disptach]);
 
   return (
@@ -62,7 +62,10 @@ export const LoginScreen = () => {
             }}
           >
             <span className="title">Diligent</span>
-            <button className="primary-button login-button" onClick={login}>
+            <button
+              className="primary-button login-button"
+              onClick={handleLoginButtonClick}
+            >
               Log in
             </button>
           </Box>

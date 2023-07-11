@@ -1,9 +1,9 @@
 import {
-  CollectionReference,
   DocumentData,
   DocumentSnapshot,
   FieldPath,
   OrderByDirection,
+  Query,
   QueryConstraint,
   endAt,
   endBefore,
@@ -15,12 +15,12 @@ import {
 } from "firebase/firestore";
 
 export const QueryBuilder = () => {
-  let colRef: CollectionReference<DocumentData> | null;
+  let queryRef: Query<DocumentData> | null;
   let specifiers: QueryConstraint[] = [];
 
   return {
-    colRef: function (ref: CollectionReference<DocumentData>) {
-      colRef = ref;
+    colRef: function (ref: Query<DocumentData>) {
+      queryRef = ref;
       return this;
     },
     orderBy: function (
@@ -51,8 +51,8 @@ export const QueryBuilder = () => {
       return this;
     },
     generate: function () {
-      if (!colRef) throw new Error("Collection Reference not set");
-      return query(colRef, ...specifiers);
+      if (!queryRef) throw new Error("Reference not set");
+      return query(queryRef, ...specifiers);
     },
   };
 };

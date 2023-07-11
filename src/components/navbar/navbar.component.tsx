@@ -2,13 +2,13 @@ import { Box } from "@mui/material";
 import "./navbar.css";
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { useCallback } from "react";
-import { logoutUserAsync } from "../../features/auth";
+import { logoutButtonClick } from "../../features/auth";
 
 export const NavBar = () => {
   const dispatch = useAppDispatch();
-  const email = useAppSelector((state) => state.auth.user.email);
-  const logout = useCallback(() => {
-    dispatch(logoutUserAsync());
+  const name = useAppSelector((state) => state.auth.user.name);
+  const handleLogoutButtonClick = useCallback(() => {
+    dispatch(logoutButtonClick());
   }, [dispatch]);
 
   return (
@@ -18,13 +18,16 @@ export const NavBar = () => {
         alignItems: "center",
         width: "100%",
         height: "50px",
-        justifyContent: "end",
-        padding: "0px 10px 0 10px",
+        justifyContent: "stretch",
+        padding: "10px 10px 10px 10px",
         boxSizing: "border-box",
       }}
     >
-      {email}:
-      <button className="primary-button logout-button" onClick={logout}>
+      <Box sx={{ width: "100%", fontWeight: "bold" }}>Hello {name}!</Box>
+      <button
+        className="logout-button primary-button"
+        onClick={handleLogoutButtonClick}
+      >
         Log out
       </button>
     </Box>

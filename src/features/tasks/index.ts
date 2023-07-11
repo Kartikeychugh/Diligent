@@ -1,1 +1,16 @@
-export { reducer as default, watchFetchTasks } from "./tasks.reducer";
+export {
+  reducer as default,
+  watchFetchTasks,
+  watchTaskAdd,
+  watchTaskRenders,
+  deleteTask,
+  watchRefreshTasks,
+  taskAdded,
+  taskDeleted,
+  taskRendered,
+  taskUnrendered,
+  fetchNextTasks,
+  watchUpdateTask,
+  taskUpdated,
+  fetchTaskSuccess,
+} from "./tasks.reducer";

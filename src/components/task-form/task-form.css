@@ -18,7 +18,7 @@
   right: 0px;
   bottom: 0px;
   height: 2px;
-  background: #e3e3e3;
+  background: rgba(191, 67, 67, 1);
 }
 
 .task-title:focus {
@@ -42,6 +42,7 @@
   width: 90px;
   transition: 10ms all;
   font-weight: 700;
+  margin-left: 10px;
 }
 
 .task-due-date {
@@ -78,4 +79,12 @@
   border-radius: 5px;
   margin-top: 2px;
   height: 15px;
+}
+
+.color-chip {
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  border: 3px solid black;
+  box-shadow: 0 0 5px black;
 }

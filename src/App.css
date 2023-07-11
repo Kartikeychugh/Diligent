@@ -1,5 +1,5 @@
 body {
-  font-family: "Montserrat", sans-serif !important;
+  font-family: "Montserrat", sans-serif;
 }
 
 .title {
@@ -8,7 +8,21 @@ body {
   font-family: "Montserrat", sans-serif;
 }
 
+.secondary-button {
+  width: fit-content;
+  border: none;
+  letter-spacing: 1px;
+  border-radius: 5px;
+  box-sizing: border-box;
+  color: #c75c5c;
+  font-family: "Montserrat", sans-serif;
+  background: white;
+  cursor: pointer;
+}
+
 .primary-button {
+  height: 100%;
+  width: fit-content;
   border: none;
   letter-spacing: 1px;
   border-radius: 5px;
