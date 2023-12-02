@@ -6,21 +6,23 @@ import {
   forwardRef,
   ForwardedRef,
 } from "react";
-import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import { formError } from "../../features/form";
-import "./task-form.css";
 import { Box, Paper } from "@mui/material";
+
 import { FormColorSelector } from "./task-form-color-selector.component";
-import { ColorSchemes } from "../../constants/card-color-scheme";
 import { FormTitle } from "./task-form-title.component";
 import { FormDescription } from "./task-form-description.component";
+
+import { useAppDispatch, useAppSelector, AppDispatch } from "../../config";
 import { TodoItem } from "../../models";
-import { AppDispatch } from "../../app/store";
+import { selectFormError, formError } from "../../features";
+import { ColorSchemes } from "../../constants";
+
+import "./task-form.css";
 
 export interface IFormValues {
   title: string;
   description: string;
-  dueDate: string;
+  dueDate: number;
   color: string;
   done: boolean;
 }
@@ -52,14 +54,14 @@ export const TaskForm = forwardRef(
     const [color, setColor] = useState(task?.color || "white");
 
     const dispatch = useAppDispatch();
-    const { error } = useAppSelector((state) => state.form);
+    const error = useAppSelector(selectFormError);
 
     const createFormState = useCallback((): IFormValues => {
       return {
         title: inputTitleRef.current?.value || "",
         description: textFieldDescriptionRef.current?.value || "",
         done: false,
-        dueDate: inputDateRef.current?.value || "",
+        dueDate: new Date(inputDateRef.current?.value || "").getTime(),
         color,
       };
     }, [color]);
@@ -70,7 +72,6 @@ export const TaskForm = forwardRef(
 
     const onTitleChange = useCallback(() => {
       if (error) {
-        // dispatch(formError(""));
         setShowError(false);
       }
     }, [error]);
@@ -121,28 +122,6 @@ export const TaskForm = forwardRef(
           return displayError("Due date is empty", dispatch, setShowError);
         }
 
-        // if (isEditMode) {
-        //   dispatch(
-        //     taskUpdated({
-        //       id: task.id,
-        //       title: inputTitleRef.current.value,
-        //       description: textFieldDescriptionRef.current?.value || "",
-        //       done: false,
-        //       dueDate: inputDateRef.current?.value || "",
-        //       color,
-        //     })
-        //   );
-        // } else {
-        //   dispatch(
-        //     taskAdded({
-        //       title: inputTitleRef.current.value,
-        //       description: textFieldDescriptionRef.current?.value || "",
-        //       done: false,
-        //       dueDate: inputDateRef.current?.value || "",
-        //       color,
-        //     })
-        //   );
-        // }
         onPrimaryAction(createFormState());
         handleResetFormAction();
       },
@@ -152,7 +131,7 @@ export const TaskForm = forwardRef(
     return (
       <Paper
         ref={ref}
-        elevation={10}
+        elevation={3}
         style={{
           display: "flex",
           flexDirection: "column",

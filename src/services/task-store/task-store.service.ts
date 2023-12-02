@@ -3,7 +3,6 @@ import {
   DocumentData,
   DocumentReference,
   DocumentSnapshot,
-  QuerySnapshot,
   Unsubscribe,
   deleteDoc,
   onSnapshot,
@@ -11,15 +10,12 @@ import {
 } from "firebase/firestore";
 import { IFirebaseStoreService } from "../firebase";
 import { Services } from "../service-manager";
-import {
-  TodoItem,
-  todoItemConverter,
-} from "../../models/todo-item/todo-item.model";
+import { TodoItem, todoItemConverter } from "../../models";
 import { QueryBuilder } from "../../utils";
 
 export interface ITaskStoreService extends IFirebaseStoreService {
   getTaskRef(id: string): DocumentReference<DocumentData>;
-  getAllTasks(): Promise<QuerySnapshot<TodoItem>>;
+  getAllTasks(): Promise<TodoItem[]>;
   getItemsCollectionRef(): CollectionReference<DocumentData>;
   deleteTask(id: string): Promise<void>;
   updateDocument: (id: string, data: DocumentData) => Promise<void>;
@@ -30,7 +26,11 @@ export interface ITaskStoreService extends IFirebaseStoreService {
   getTaskSnapshot: (
     this: ITaskStoreService,
     id: string
-  ) => Promise<DocumentSnapshot<DocumentData>>;
+  ) => Promise<DocumentSnapshot<TodoItem>>;
+  addTask: (
+    this: ITaskStoreService,
+    task: TodoItem
+  ) => Promise<DocumentReference<DocumentData>>;
 }
 
 const TaskStoreServiceFactory = async () => {
@@ -38,7 +38,7 @@ const TaskStoreServiceFactory = async () => {
   const taskStoreService: ITaskStoreService = Object.assign(
     Object.create(firebaseStoreService),
     {
-      getAllTasks: function getAllTasks(this: ITaskStoreService) {
+      getAllTasks: async function getAllTasks(this: ITaskStoreService) {
         if (!this.firebaseAuth.currentUser) throw new Error("");
 
         const colRef =
@@ -49,7 +49,14 @@ const TaskStoreServiceFactory = async () => {
           .generate()
           .withConverter(todoItemConverter);
 
-        return this.getDocuments(Q);
+        const snapshot = await this.getDocuments(Q);
+        return snapshot.docs.map((doc) => doc.data());
+      },
+      addTask: function addTask(this: ITaskStoreService, task: TodoItem) {
+        return this.addDocument(
+          this.getItemsCollectionRef().withConverter(todoItemConverter),
+          task
+        );
       },
       getItemsCollectionRef: function getItemsCollectionRef(
         this: ITaskStoreService
@@ -78,7 +85,7 @@ const TaskStoreServiceFactory = async () => {
             this.firebaseAuth.currentUser.uid,
             "items",
             id,
-          ])
+          ]).withConverter(todoItemConverter)
         );
       },
       watchTaskChanges: function watchTaskChanges(

@@ -1,1 +1,6 @@
-export { reducer as default, FormState, formError } from "./form.reducer";
+export {
+  reducer as default,
+  FormState,
+  formError,
+  selectFormError,
+} from "./form.reducer";

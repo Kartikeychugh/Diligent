@@ -1,24 +1,30 @@
 import { useCallback, useEffect, useState } from "react";
-import { useAppDispatch } from "../../app/hooks";
 import { IconButton, Box, Paper } from "@mui/material";
-import { TodoItem } from "../../models";
-import { ColorSchemes } from "../../constants/card-color-scheme";
 import CloseSharpIcon from "@mui/icons-material/CloseSharp";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
-import {
-  taskDeleted,
-  taskRendered,
-  taskUnrendered,
-  taskUpdated,
-} from "../../features/tasks";
-import { TaskForm } from "../task-form";
 import EditIcon from "@mui/icons-material/Edit";
-import { IFormValues } from "../task-form/task-form.component";
 
-export const TaskCard = (props: { task: TodoItem }) => {
-  const { task } = props;
+import { useAppDispatch, useAppSelector } from "../../config";
+import { ColorSchemes } from "../../constants";
+import { TaskForm, IFormValues } from "../task-form";
+import {
+  fetchTodoAction,
+  deleteTodoAction,
+  updateTodoAction,
+} from "../../features";
+
+export const TaskCard = (props: { taskId: string }) => {
+  const { taskId } = props;
+  const task = useAppSelector((state) => state.todos[taskId]);
+
   const [editMode, setEditMode] = useState(false);
   const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    if (!task) {
+      dispatch(fetchTodoAction(taskId));
+    }
+  }, [dispatch, task, taskId]);
 
   const toggleEditMode = useCallback(() => {
     setEditMode((s) => !s);
@@ -30,22 +36,19 @@ export const TaskCard = (props: { task: TodoItem }) => {
 
   const handleUpdateAction = useCallback(
     (values: IFormValues) => {
-      dispatch(taskUpdated({ id: task.id, ...values }));
+      if (!task) return;
+      dispatch(updateTodoAction({ id: task.id, changes: values }));
       toggleEditMode();
     },
-    [toggleEditMode, dispatch, task.id]
+    [task, dispatch, toggleEditMode]
   );
 
   const handleDeleteAction = useCallback(() => {
-    dispatch(taskDeleted(task.id));
-  }, [dispatch, task.id]);
+    if (!task) return;
+    dispatch(deleteTodoAction(task));
+  }, [dispatch, task]);
 
-  useEffect(() => {
-    dispatch(taskRendered(task.id));
-    return () => {
-      dispatch(taskUnrendered(task.id));
-    };
-  }, [dispatch, task.id]);
+  if (!task) return null;
 
   return editMode ? (
     <TaskForm
@@ -56,70 +59,94 @@ export const TaskCard = (props: { task: TodoItem }) => {
       onSecondaryAction={handleDiscardAction}
     />
   ) : (
-    <Paper sx={{ display: "flex" }} elevation={8} key={task.id}>
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        width: "100%",
+        height: "100%",
+        background: ColorSchemes[task.color].normal,
+        padding: "5px 5px 5px 10px",
+        boxSizing: "border-box",
+        color: ColorSchemes[task.color].color,
+        borderLeft: `10px solid ${ColorSchemes[task.color].dark}`,
+        transition: "500ms all",
+        flexWrap: "nowrap",
+      }}
+    >
       <Box
         sx={{
           display: "flex",
-          flexDirection: "column",
+          flexDirection: "row",
           width: "100%",
-          height: "100%",
-          background: ColorSchemes[task.color].normal,
-          borderRadius: "5px",
-          padding: "20px",
-          boxSizing: "border-box",
-          color: ColorSchemes[task.color].color,
-          borderLeft: `10px solid ${ColorSchemes[task.color].dark}`,
-          transition: "500ms all",
-          flexWrap: "nowrap",
+          alignItems: "center",
         }}
       >
         <Box
           sx={{
-            display: "flex",
-            flexDirection: "row",
-            width: "100%",
-            alignItems: "center",
+            fontSize: "16px",
+            fontWeight: "bolder",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
           }}
         >
-          <Box
-            sx={{
-              fontSize: "20px",
-              fontWeight: "bolder",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            <span style={{ letterSpacing: "1.2px" }}>{task.title}</span>
-          </Box>
-          <Box sx={{ display: "flex", justifyContent: "end", flexGrow: 1 }}>
-            <IconButton aria-label="open in full" onClick={toggleEditMode}>
-              <EditIcon sx={{ color: ColorSchemes[task.color].color }} />
-            </IconButton>
-            <IconButton aria-label="open in full">
-              <OpenInNewIcon sx={{ color: ColorSchemes[task.color].color }} />
-            </IconButton>
-            <IconButton aria-label="close" onClick={handleDeleteAction}>
-              <CloseSharpIcon sx={{ color: ColorSchemes[task.color].color }} />
-            </IconButton>
-          </Box>
+          <span style={{ letterSpacing: "1.2px" }}>{task.title}</span>
         </Box>
-        {task.description && (
-          <Box
-            sx={{
-              letterSpacing: "2px",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-              fontSize: "13px",
-              background: ColorSchemes[task.color].dark,
-              maxHeight: "50px",
-            }}
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "end",
+            flexGrow: 1,
+          }}
+        >
+          <IconButton
+            sx={{ fontSize: "20px" }}
+            aria-label="open in full"
+            onClick={toggleEditMode}
           >
-            <span style={{ padding: "5px" }}>{task.description}</span>
-          </Box>
-        )}
+            <EditIcon
+              fontSize="inherit"
+              sx={{ color: ColorSchemes[task.color].color }}
+            />
+          </IconButton>
+          <IconButton
+            sx={{ fontSize: "20px" }}
+            aria-label="close"
+            onClick={handleDeleteAction}
+          >
+            <CloseSharpIcon
+              fontSize="inherit"
+              sx={{ color: ColorSchemes[task.color].color }}
+            />
+          </IconButton>
+        </Box>
       </Box>
-    </Paper>
+      {task.description && (
+        <Box
+          sx={{
+            letterSpacing: "2px",
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+            fontSize: "12px",
+            // background: ColorSchemes[task.color].dark,
+            maxHeight: "50px",
+          }}
+        >
+          <span style={{ padding: "0px" }}>{task.description}</span>
+        </Box>
+      )}
+      <Box
+        sx={{
+          marginTop: "5px",
+          letterSpacing: "0.5px",
+          fontSize: "10px",
+          color: ColorSchemes[task.color].color,
+        }}
+      >
+        Due on: {new Date(task.dueDate).toLocaleDateString()}
+      </Box>
+    </Box>
   );
 };

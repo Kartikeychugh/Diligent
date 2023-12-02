@@ -1,12 +1,13 @@
 import { Box, LinearProgress } from "@mui/material";
 import { useCallback } from "react";
-import { useAppDispatch, useAppSelector } from "../../app/hooks";
-import { LOGIN_STATE, loginButtonClick } from "../../features/auth";
+import { useAppDispatch, useAppSelector } from "../../config";
+import { LOGIN_STATE, loginButtonClick, selectAuthState } from "../../features";
+
 import "./login-screen.css";
 
 export const LoginScreen = () => {
   const disptach = useAppDispatch();
-  const { auth_state } = useAppSelector((state) => state.auth);
+  const auth_state = useAppSelector(selectAuthState);
   const handleLoginButtonClick = useCallback(() => {
     disptach(loginButtonClick());
   }, [disptach]);

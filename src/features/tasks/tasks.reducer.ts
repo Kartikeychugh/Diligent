@@ -1,4 +1,4 @@
-import { PayloadAction, createSlice } from "@reduxjs/toolkit";
+import { PayloadAction, createSelector, createSlice } from "@reduxjs/toolkit";
 import { TodoItem } from "../../models";
 import {
   call,
@@ -18,13 +18,11 @@ import {
   DocumentData,
   DocumentSnapshot,
   QuerySnapshot,
-  Timestamp,
-  serverTimestamp,
 } from "firebase/firestore";
 import { todoItemConverter } from "../../models/todo-item/todo-item.model";
 import { QueryBuilder } from "../../utils";
 import { EventChannel, Task, eventChannel } from "redux-saga";
-import { RootState } from "../../app/store";
+import { RootState } from "../../config/store";
 
 export interface ITasksState {
   itemIndex: { [key: string]: number };
@@ -95,240 +93,212 @@ export const tasksSlice = createSlice({
   },
 });
 
-export function* watchRefreshTasks() {
-  yield takeLeading("REFRESH_TASKS", function* () {
-    const taskStoreService: ITaskStoreService = yield Services.TaskStoreService;
-    const state: RootState = yield select();
+// export function* watchRefreshTasks() {
+//   yield takeLeading("REFRESH_TASKS", function* () {
+//     const taskStoreService: ITaskStoreService = yield Services.TaskStoreService;
+//     const state: RootState = yield select();
 
-    const Q = QueryBuilder()
-      .colRef(taskStoreService.getItemsCollectionRef())
-      .orderBy("dueDate", "asc")
-      .orderBy("createdOn", "desc")
-      .endAt(state.tasks.lastVisible)
-      .generate()
-      .withConverter(todoItemConverter);
+//     const Q = QueryBuilder()
+//       .colRef(taskStoreService.getItemsCollectionRef())
+//       .orderBy("dueDate", "asc")
+//       .orderBy("createdOn", "desc")
+//       .endAt(state.tasks.lastVisible)
+//       .generate()
+//       .withConverter(todoItemConverter);
 
-    const docs: QuerySnapshot<TodoItem> = yield taskStoreService.getDocuments(
-      Q
-    );
+//     const docs: QuerySnapshot<TodoItem> = yield taskStoreService.getDocuments(
+//       Q
+//     );
 
-    const orderedItems: TodoItem[] = [];
-    docs.forEach((doc) => {
-      orderedItems.push(doc.data());
-    });
-    const lastVisible = docs.docs[docs.docs.length - 1];
-    yield put(refreshTasks({ orderedItems, lastVisible }));
-  });
-}
+//     const orderedItems: TodoItem[] = [];
+//     docs.forEach((doc) => {
+//       orderedItems.push(doc.data());
+//     });
+//     const lastVisible = docs.docs[docs.docs.length - 1];
+//     yield put(refreshTasks({ orderedItems, lastVisible }));
+//   });
+// }
 
-export function* watchFetchTasks() {
-  yield takeLeading("FETCH_NEXT_TASKS", function* () {
-    const taskStoreService: ITaskStoreService = yield Services.TaskStoreService;
-    const state: RootState = yield select();
+// export function* watchFetchTasks() {
+//   yield takeLeading("FETCH_NEXT_TASKS", function* () {
+//     const taskStoreService: ITaskStoreService = yield Services.TaskStoreService;
+//     const state: RootState = yield select();
 
-    const Q = QueryBuilder()
-      .colRef(taskStoreService.getItemsCollectionRef())
-      .orderBy("dueDate", "asc")
-      .orderBy("createdOn", "desc")
-      .startAfter(state.tasks.lastVisible)
-      .limit(state.tasks.limit)
-      .generate()
-      .withConverter(todoItemConverter);
+//     const Q = QueryBuilder()
+//       .colRef(taskStoreService.getItemsCollectionRef())
+//       .orderBy("dueDate", "asc")
+//       .orderBy("createdOn", "desc")
+//       .startAfter(state.tasks.lastVisible)
+//       .limit(state.tasks.limit)
+//       .generate()
+//       .withConverter(todoItemConverter);
 
-    const qs: QuerySnapshot<TodoItem> = yield taskStoreService.getDocuments(Q);
+//     const qs: QuerySnapshot<TodoItem> = yield taskStoreService.getDocuments(Q);
 
-    if (qs.docs.length === 0) return;
+//     if (qs.docs.length === 0) return;
 
-    const orderedItems: TodoItem[] = [];
-    qs.forEach((doc) => {
-      orderedItems.push(doc.data());
-    });
-    const lastVisible = qs.docs[qs.docs.length - 1];
-    yield put(fetchTaskSuccess({ orderedItems, lastVisible }));
-    // yield put(setLastVisible(qs.docs[qs.docs.length - 1]));
-  });
-}
+//     const orderedItems: TodoItem[] = [];
+//     qs.forEach((doc) => {
+//       orderedItems.push(doc.data());
+//     });
+//     const lastVisible = qs.docs[qs.docs.length - 1];
+//     yield put(fetchTaskSuccess({ orderedItems, lastVisible }));
+//     // yield put(setLastVisible(qs.docs[qs.docs.length - 1]));
+//   });
+// }
 
-export function* watchTaskAdd() {
-  yield takeEvery(
-    "TASK_ADDED",
-    function* (
-      action: PayloadAction<{
-        title: string;
-        description: string;
-        done: boolean;
-        dueDate: string;
-        color: string;
-      }>
-    ) {
-      try {
-        const state: RootState = yield select();
-        const { title, description, done, dueDate, color } = action.payload;
+// export function* watchTaskAdd() {
+//   yield takeEvery("TASK_ADDED", function* (action: PayloadAction<TodoItem>) {
+//     try {
+//       const state: RootState = yield select();
+//       const item = action.payload;
 
-        const service: IFirebaseStoreService =
-          yield Services.FirebaseStoreService;
+//       const service: IFirebaseStoreService =
+//         yield Services.FirebaseStoreService;
 
-        const colRef = service
-          .getCollectionRef("users", [state.auth.user.id, "items"])
-          .withConverter(todoItemConverter);
+//       const colRef = service
+//         .getCollectionRef("users", [state.auth.user.id, "items"])
+//         .withConverter(todoItemConverter);
 
-        const item = new TodoItem(
-          "",
-          title,
-          description,
-          serverTimestamp() as Timestamp,
-          dueDate,
-          done,
-          color
-        );
+//       yield call(service.addDocument, colRef, item);
+//       yield put({ type: "REFRESH_TASKS" });
+//     } catch (e) {}
+//   });
+// }
 
-        yield call(service.addDocument, colRef, item);
-        yield put({ type: "REFRESH_TASKS" });
-      } catch (e) {
-        console.log(e);
-      }
-    }
-  );
-}
+// function createTaskChannel(id: string) {
+//   return eventChannel<DocumentSnapshot<DocumentData>>((emitter) => {
+//     const unsubscribe = (async () => {
+//       let firstCall = true;
+//       const taskStoreService = await Services.TaskStoreService;
+//       return taskStoreService.watchTaskChanges(id, (qs) => {
+//         if (firstCall) {
+//           firstCall = false;
+//         } else {
+//           emitter(qs);
+//         }
+//       });
+//     })();
 
-function createTaskChannel(id: string) {
-  return eventChannel<DocumentSnapshot<DocumentData>>((emitter) => {
-    const unsubscribe = (async () => {
-      let firstCall = true;
-      const taskStoreService = await Services.TaskStoreService;
-      return taskStoreService.watchTaskChanges(id, (qs) => {
-        if (firstCall) {
-          firstCall = false;
-        } else {
-          console.log("emitting");
+//     return () => {
+//       unsubscribe.then((fn) => {
+//         fn();
+//       });
+//     };
+//   });
+// }
 
-          emitter(qs);
-        }
-      });
-    })();
+// function* createTaskSubscriptiom(taskId: string) {
+//   const channel: EventChannel<DocumentSnapshot<DocumentData>> = yield call(
+//     createTaskChannel,
+//     taskId
+//   );
 
-    return () => {
-      unsubscribe.then((fn) => {
-        fn();
-      });
-    };
-  });
-}
+//   try {
+//     while (true) {
+//       yield take(channel);
+//       yield put({ type: "REFRESH_TASKS" });
+//     }
+//   } finally {
+//     channel.close();
+//   }
+// }
 
-function* createTaskSubscriptiom(taskId: string) {
-  const channel: EventChannel<DocumentSnapshot<DocumentData>> = yield call(
-    createTaskChannel,
-    taskId
-  );
+// function* createAndMaintainTaskSubsciption(action: PayloadAction<string>) {
+//   const taskId = action.payload;
+//   const subscription: Task = yield fork(createTaskSubscriptiom, taskId);
 
-  try {
-    while (true) {
-      yield take(channel);
-      yield put({ type: "REFRESH_TASKS" });
-    }
-  } finally {
-    channel.close();
-  }
-}
+//   while (true) {
+//     const taskUnrendered: PayloadAction<string> = yield take("TASK_UNRENDERED");
+//     if (taskId === taskUnrendered.payload) {
+//       subscription.cancel();
+//       return;
+//     }
+//   }
+// }
 
-function* createAndMaintainTaskSubsciption(action: PayloadAction<string>) {
-  const taskId = action.payload;
-  const subscription: Task = yield fork(createTaskSubscriptiom, taskId);
+// export function* watchTaskRenders() {
+//   yield takeEvery("TASK_RENDERED", createAndMaintainTaskSubsciption);
+// }
 
-  while (true) {
-    const taskUnrendered: PayloadAction<string> = yield take("TASK_UNRENDERED");
-    if (taskId === taskUnrendered.payload) {
-      console.log(`Cancelling ${taskId}`);
-      subscription.cancel();
-      return;
-    }
-  }
-}
+// export function* deleteTask() {
+//   yield takeEvery("TASK_DELETED", function* (action: PayloadAction<string>) {
+//     const taskId = action.payload;
+//     const taskStoreService: ITaskStoreService = yield Services.TaskStoreService;
+//     yield taskStoreService.deleteTask(taskId);
+//     // yield put({ type: "REFRESH_TASKS" });
+//   });
+// }
 
-export function* watchTaskRenders() {
-  yield takeEvery("TASK_RENDERED", createAndMaintainTaskSubsciption);
-}
+// export function* watchUpdateTask() {
+//   yield takeEvery(
+//     "TASK_UPDATED",
+//     function* (
+//       action: PayloadAction<{
+//         id: string;
+//         title: string;
+//         description: string;
+//         done: boolean;
+//         dueDate: number;
+//         color: string;
+//       }>
+//     ) {
+//       const { id, ...data } = action.payload;
+//       const service: ITaskStoreService = yield Services.TaskStoreService;
+//       yield service.updateDocument(id, data);
 
-export function* deleteTask() {
-  yield takeEvery("TASK_DELETED", function* (action: PayloadAction<string>) {
-    const taskId = action.payload;
-    const taskStoreService: ITaskStoreService = yield Services.TaskStoreService;
-    yield taskStoreService.deleteTask(taskId);
-    yield put({ type: "REFRESH_TASKS" });
-  });
-}
+//       const state: RootState = yield select();
 
-export function* watchUpdateTask() {
-  yield takeEvery(
-    "TASK_UPDATED",
-    function* (
-      action: PayloadAction<{
-        id: string;
-        title: string;
-        description: string;
-        done: boolean;
-        dueDate: string;
-        color: string;
-      }>
-    ) {
-      const { id, ...data } = action.payload;
-      const service: ITaskStoreService = yield Services.TaskStoreService;
-      yield service.updateDocument(id, {
-        ...data,
-        dueDate: new Date(data.dueDate).getTime(),
-      });
+//       if (id === state.tasks.lastVisible?.id) {
+//         const snapshot: DocumentSnapshot<TodoItem> =
+//           yield service.getTaskSnapshot(id);
+//         yield put(setLastVisible(snapshot));
+//       }
 
-      const state: RootState = yield select();
-      if (id === state.tasks.lastVisible?.id) {
-        const snapshot: DocumentSnapshot<TodoItem> =
-          yield service.getTaskSnapshot(id);
-        yield put(setLastVisible(snapshot));
-      }
-
-      yield put({ type: "REFRESH_TASKS" });
-    }
-  );
-}
+//       // yield put({ type: "REFRESH_TASKS" });
+//     }
+//   );
+// }
 
 export const reducer = tasksSlice.reducer;
-export const { fetchTaskSuccess, refreshTasks, setLastVisible } =
-  tasksSlice.actions;
+// export const { fetchTaskSuccess, refreshTasks, setLastVisible } =
+//   tasksSlice.actions;
 
-export const taskRendered = (payload: string) => ({
-  type: "TASK_RENDERED",
-  payload: payload,
-});
+// export const taskRendered = (payload: string) => ({
+//   type: "TASK_RENDERED",
+//   payload: payload,
+// });
 
-export const taskDeleted = (payload: string) => ({
-  type: "TASK_DELETED",
-  payload: payload,
-});
+// export const taskDeleted = (payload: string) => ({
+//   type: "TASK_DELETED",
+//   payload: payload,
+// });
 
-export const taskUnrendered = (payload: string) => ({
-  type: "TASK_UNRENDERED",
-  payload: payload,
-});
+// export const taskUnrendered = (payload: string) => ({
+//   type: "TASK_UNRENDERED",
+//   payload: payload,
+// });
 
-export const taskAdded = (payload: {
-  title: string;
-  description: string;
-  done: boolean;
-  dueDate: string;
-  color: string;
-}) => ({
-  type: "TASK_ADDED",
-  payload,
-});
+// export const taskAdded = (payload: TodoItem) => ({
+//   type: "TASK_ADDED",
+//   payload,
+// });
 
-export const taskUpdated = (payload: {
-  id: string;
-  title: string;
-  description: string;
-  done: boolean;
-  dueDate: string;
-  color: string;
-}) => ({ type: "TASK_UPDATED", payload });
+// export const taskUpdated = (payload: {
+//   id: string;
+//   title: string;
+//   description: string;
+//   done: boolean;
+//   dueDate: number;
+//   color: string;
+// }) => ({ type: "TASK_UPDATED", payload });
 
-export const fetchNextTasks = () => ({
-  type: "FETCH_NEXT_TASKS",
-});
+// export const fetchNextTasks = () => ({
+//   type: "FETCH_NEXT_TASKS",
+// });
+
+// const selectSelf = (state: RootState) => state.tasks;
+// export const selectOrderedItems = createSelector(
+//   [selectSelf],
+//   (state) => state.orderedItems
+// );

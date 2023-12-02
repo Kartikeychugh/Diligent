@@ -1,5 +1,5 @@
 import { userProfileConverter, UserProfile } from "../../models";
-import { IFirebaseStoreService } from "../firebase/firebase-store.service";
+import { IFirebaseStoreService } from "../firebase";
 import { Services } from "../service-manager";
 
 export interface IUserProfileService extends IFirebaseStoreService {

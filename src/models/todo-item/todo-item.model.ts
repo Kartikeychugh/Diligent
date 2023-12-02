@@ -19,7 +19,7 @@ export class TodoItem {
     title: string,
     description: string,
     createdOn: Timestamp,
-    dueDate: string,
+    dueDate: number,
     done: boolean,
     color = "white"
   ) {
@@ -28,7 +28,7 @@ export class TodoItem {
     this.description = description;
     this.createdOn = createdOn;
     this.done = done;
-    this.dueDate = dueDate ? new Date(dueDate).getTime() : 0;
+    this.dueDate = dueDate;
     this.color = color;
   }
 }

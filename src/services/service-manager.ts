@@ -23,4 +23,10 @@ export const Services = {
       return taskStoreService;
     })();
   },
+  get ViewService() {
+    return (async () => {
+      const { viewService } = await import("./view");
+      return viewService;
+    })();
+  },
 };

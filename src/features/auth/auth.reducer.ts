@@ -1,11 +1,15 @@
-import { PayloadAction, createSlice } from "@reduxjs/toolkit";
+import { PayloadAction, createSelector, createSlice } from "@reduxjs/toolkit";
 import { call, put, take, takeLatest, takeLeading } from "redux-saga/effects";
-import { Services } from "../../services/service-manager";
-import { IFirebaseAuthService } from "../../services/firebase/firebase-auth.service";
 import { EventChannel, eventChannel } from "redux-saga";
 import { User } from "firebase/auth";
-import { IUserProfileService } from "../../services/user-profile/user-profile.service";
+
+import {
+  Services,
+  IUserProfileService,
+  IFirebaseAuthService,
+} from "../../services";
 import { UserProfile } from "../../models";
+import { RootState } from "../../config";
 
 export enum LOGIN_STATE {
   LOGGED_OUT,
@@ -104,6 +108,7 @@ export function* watchUserAuthStatus() {
             user.email
           );
           yield userProfileService.createUserProfile(userProfile);
+
           yield put(setUser(userProfile));
           yield put(setAuthState(LOGIN_STATE.LOGGED_IN));
         } else {
@@ -123,3 +128,14 @@ export const appLoaded = () => ({ type: "APP_LOADED" });
 
 export const reducer = authSlice.reducer;
 export const { setUser, setAuthState } = authSlice.actions;
+
+const selectSelf = (state: RootState) => state.auth;
+export const selectAuthState = createSelector(
+  [selectSelf],
+  (state) => state.auth_state
+);
+export const selectUser = createSelector([selectSelf], (state) => state.user);
+export const selectUsername = createSelector(
+  [selectUser],
+  (state) => state.name
+);

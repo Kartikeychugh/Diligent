@@ -1,4 +1,5 @@
-import { PayloadAction, createSlice } from "@reduxjs/toolkit";
+import { PayloadAction, createSelector, createSlice } from "@reduxjs/toolkit";
+import { RootState } from "../../config";
 
 export enum FormState {
   AVAILABLE,
@@ -29,3 +30,9 @@ const formSlice = createSlice({
 export const { formError } = formSlice.actions;
 
 export const reducer = formSlice.reducer;
+
+const selectSelf = (state: RootState) => state.form;
+export const selectFormError = createSelector(
+  [selectSelf],
+  (state) => state.error
+);

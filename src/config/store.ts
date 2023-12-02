@@ -1,23 +1,23 @@
 import { configureStore, ThunkAction, Action } from "@reduxjs/toolkit";
-import counterReducer from "../features/counter/counterSlice";
 import createSagaMiddleware from "redux-saga";
 import { all } from "redux-saga/effects";
 import formReducer from "../features/form";
+import { todosReducer, watchFetchTodo } from "../features/todos";
 import authReducer, {
   watchLoginUserAsync,
   watchUserAuthStatus,
   watchLogoutUserAsync,
 } from "../features/auth";
-import tasksReducer, {
-  watchFetchTasks,
-  watchTaskAdd,
-  watchUpdateTask,
-} from "../features/tasks";
 import {
-  watchRefreshTasks,
-  watchTaskRenders,
-  deleteTask,
-} from "../features/tasks";
+  viewsReducer,
+  watchFetchView,
+  watchAddTodo,
+  watchDeleteTodo,
+  watchUpdateTodo,
+  watchAddToView,
+  watchRemoveFromView,
+  watchUpdateView,
+} from "../features";
 
 // notice how we now only export the rootSaga
 // single entry point to start all Sagas at once
@@ -26,22 +26,24 @@ export function* rootSaga() {
     watchUserAuthStatus(),
     watchLoginUserAsync(),
     watchLogoutUserAsync(),
-    watchTaskAdd(),
-    watchFetchTasks(),
-    watchRefreshTasks(),
-    watchTaskRenders(),
-    deleteTask(),
-    watchUpdateTask(),
+    watchFetchTodo(),
+    watchAddTodo(),
+    watchDeleteTodo(),
+    watchUpdateTodo(),
+    watchFetchView(),
+    watchAddToView(),
+    watchRemoveFromView(),
+    watchUpdateView(),
   ]);
 }
 
 const sagaMiddleware = createSagaMiddleware();
 export const store = configureStore({
   reducer: {
-    counter: counterReducer,
     auth: authReducer,
     form: formReducer,
-    tasks: tasksReducer,
+    todos: todosReducer,
+    view: viewsReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({ serializableCheck: false }).concat(sagaMiddleware),

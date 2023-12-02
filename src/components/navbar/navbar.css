@@ -5,3 +5,7 @@
   width: 100px;
   white-space: nowrap;
 }
+
+.add-task-button {
+  font-size: 25px;
+}

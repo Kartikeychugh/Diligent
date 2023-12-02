@@ -9,4 +9,6 @@ export {
   LOGIN_STATE,
   loginButtonClick,
   watchLogoutUserAsync,
+  selectAuthState,
+  selectUsername,
 } from "./auth.reducer";

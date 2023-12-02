@@ -85,9 +85,12 @@ const FirebaseStoreServiceFactory = async () => {
     q: Query<T>,
     callback: (qs: QuerySnapshot<T>) => void
   ) {
-    return onSnapshot(q, { includeMetadataChanges: false }, callback, (err) => {
-      console.log(err);
-    });
+    return onSnapshot(
+      q,
+      { includeMetadataChanges: false },
+      callback,
+      (err) => {}
+    );
   };
 
   return Object.freeze(service);

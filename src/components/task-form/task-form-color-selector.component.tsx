@@ -1,6 +1,7 @@
-import { Box, Popover } from "@mui/material";
 import { useState, useRef, useCallback } from "react";
-import { ColorSchemes } from "../../constants/card-color-scheme";
+import { Box, Popover } from "@mui/material";
+
+import { ColorSchemes } from "../../constants";
 
 const ColorSelection = (props: {
   colors: string[];

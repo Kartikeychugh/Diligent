@@ -1,12 +1,15 @@
-import { Box } from "@mui/material";
-import "./navbar.css";
-import { useAppDispatch, useAppSelector } from "../../app/hooks";
 import { useCallback } from "react";
-import { logoutButtonClick } from "../../features/auth";
+import { Box } from "@mui/material";
+
+import { useAppDispatch, useAppSelector } from "../../config";
+import { logoutButtonClick, selectUsername } from "../../features";
+
+import "./navbar.css";
 
 export const NavBar = () => {
   const dispatch = useAppDispatch();
-  const name = useAppSelector((state) => state.auth.user.name);
+  const name = useAppSelector(selectUsername);
+
   const handleLogoutButtonClick = useCallback(() => {
     dispatch(logoutButtonClick());
   }, [dispatch]);
@@ -24,6 +27,7 @@ export const NavBar = () => {
       }}
     >
       <Box sx={{ width: "100%", fontWeight: "bold" }}>Hello {name}!</Box>
+      <button className="add-task-button">+</button>
       <button
         className="logout-button primary-button"
         onClick={handleLogoutButtonClick}

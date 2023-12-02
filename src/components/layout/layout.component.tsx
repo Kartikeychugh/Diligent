@@ -2,12 +2,12 @@ import { TaskForm } from "../task-form";
 import { Box } from "@mui/material";
 import { Tasks } from "../tasks";
 import { NavBar } from "../navbar";
-import { FormHead } from "../task-form/task-form-head.component";
+import { FormHead, IFormValues } from "../task-form";
 import { useCallback, useRef, useState } from "react";
-import { useAppDispatch } from "../../app/hooks";
-import { taskAdded } from "../../features/tasks";
-import { IFormValues } from "../task-form/task-form.component";
-// import { TaskEditor } from "../tasks/task-editor";
+import { useAppDispatch } from "../../config";
+import { TodoItem } from "../../models";
+import { Timestamp, serverTimestamp } from "firebase/firestore";
+import { addTodoAction } from "../../features";
 
 const NewTaskForm = (props: {}) => {
   const ref = useRef<HTMLDivElement | null>(null);
@@ -23,7 +23,16 @@ const NewTaskForm = (props: {}) => {
 
   const handleAddAction = useCallback(
     (values: IFormValues) => {
-      dispatch(taskAdded(values));
+      const item = new TodoItem(
+        "",
+        values.title,
+        values.description,
+        serverTimestamp() as Timestamp,
+        values.dueDate,
+        values.done,
+        values.color
+      );
+      dispatch(addTodoAction(item));
       toggleForm();
     },
     [toggleForm, dispatch]
@@ -37,6 +46,7 @@ const NewTaskForm = (props: {}) => {
         height: "30px",
         padding: "10px",
         width: "100%",
+
         transition: "200ms all",
         boxSizing: "border-box",
       }}
@@ -52,6 +62,7 @@ const NewTaskForm = (props: {}) => {
     </Box>
   );
 };
+
 export const Layout = () => {
   return (
     <Box
@@ -64,6 +75,7 @@ export const Layout = () => {
         padding: "10px",
         boxSizing: "border-box",
         overflow: "hidden",
+        alignItems: "center",
       }}
     >
       {/* <TaskEditor id="sdwritTCOhsHQzSy9CLw" /> */}
